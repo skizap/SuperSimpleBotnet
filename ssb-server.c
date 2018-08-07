@@ -96,6 +96,8 @@ main(int argc, char **argv)
 	while (1) {
 		SSL *ssl;
 		const char reply[] = "testing\n";
+		char buf[4096];
+		int recv = -1;
 
 		if ((cfd = accept(lfd, (struct sockaddr*) NULL, NULL)) < 0) {
 			fprintf(stderr, "Failed to accept connections\n");
@@ -104,9 +106,15 @@ main(int argc, char **argv)
 
 		ssl = SSL_new(ctx);
 		SSL_set_fd(ssl, cfd);
-		if (SSL_accept(ssl) == 1)
+		if (SSL_accept(ssl) == 1) {
 			SSL_write(ssl, reply, strlen(reply));
-		else {
+			if ((recv = SSL_read(ssl, buf, sizeof(buf))) <= 0) {
+				fprintf(stderr, "Failed to read data\n");
+				exit(-1);
+			}
+			buf[recv] = '\0';
+			printf("%s",buf);
+		} else {
 			fprintf(stderr, "Failed to accept SSL connections\n");
 			exit(-1);
 		}
