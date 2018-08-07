@@ -87,7 +87,10 @@ main(int argc, char **argv)
 		fprintf(stderr, "Run as root\n");
 		exit(-1);
 	}
-	/* Setup SSL */
+	/* Setup SSL
+	 *
+	 * Example taken from: https://wiki.openssl.org/index.php/Simple_TLS_Server
+	 */
 	init_ssl();
 	ctx = ssl_ctx(argv[1], argv[2]);
 
