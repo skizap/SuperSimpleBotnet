@@ -10,6 +10,7 @@
 #include <openssl/err.h>
 
 #define PORT 443
+#define MAXCH 10
 
 void init_ssl();
 SSL_CTX *ssl_ctx();
@@ -98,9 +99,18 @@ main(int argc, char **argv)
 
 	while (1) {
 		SSL *ssl;
-		const char reply[] = "testing\n";
+		FILE *fp;
+		char reply[MAXCH];
 		char buf[4096];
 		int recv = -1;
+
+		/* Read the command to client using a textfile*/
+		if (!(fp = fopen("cmd", "r"))) {
+			fprintf(stderr, "Failed to open command file\n");
+			exit(-1);
+		}
+		fscanf(fp, "%s", reply);
+		fclose(fp);
 
 		if ((cfd = accept(lfd, (struct sockaddr*) NULL, NULL)) < 0) {
 			fprintf(stderr, "Failed to accept connections\n");
