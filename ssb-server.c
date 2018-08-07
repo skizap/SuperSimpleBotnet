@@ -88,9 +88,8 @@ main(int argc, char **argv)
 		fprintf(stderr, "Run as root\n");
 		exit(-1);
 	}
-	/* Setup SSL
-	 *
-	 * Example taken from: https://wiki.openssl.org/index.php/Simple_TLS_Server
+	/* Example taken from: https://wiki.openssl.org/index.php/Simple_TLS_Server
+	 * Setup SSL
 	 */
 	init_ssl();
 	ctx = ssl_ctx(argv[1], argv[2]);
@@ -99,12 +98,17 @@ main(int argc, char **argv)
 
 	while (1) {
 		SSL *ssl;
+		struct sockaddr_in inc_adr;
 		FILE *fp;
-		char reply[MAXCH];
-		char buf[4096];
+		char reply[MAXCH], buf[4096];
+		char *data, *c_adr;
 		int recv = -1;
+		size_t adr_len;
 
-		/* Read the command to client using a textfile*/
+		memset(&inc_adr, 0, sizeof(inc_adr));
+		adr_len = sizeof(inc_adr);
+
+		/* Read the command to client using a textfile */
 		if (!(fp = fopen("cmd", "r"))) {
 			fprintf(stderr, "Failed to open command file\n");
 			exit(-1);
@@ -112,7 +116,7 @@ main(int argc, char **argv)
 		fscanf(fp, "%s", reply);
 		fclose(fp);
 
-		if ((cfd = accept(lfd, (struct sockaddr*) NULL, NULL)) < 0) {
+		if ((cfd = accept(lfd, (struct sockaddr*) &inc_adr, (socklen_t*) &adr_len)) < 0) {
 			fprintf(stderr, "Failed to accept connections\n");
 			exit(-1);
 		}
@@ -125,13 +129,14 @@ main(int argc, char **argv)
 				fprintf(stderr, "Failed to read data\n");
 				exit(-1);
 			}
-			buf[recv] = '\0';
-			printf("%s",buf);
 		} else {
 			fprintf(stderr, "Failed to accept SSL connections\n");
 			exit(-1);
 		}
-
+		buf[recv] = '\0';
+		data = strrchr(buf, '\n');
+		c_adr = inet_ntoa(inc_adr.sin_addr);
+		printf("DATA RECEIVED FROM '%s': %s\n",c_adr ,data);
 		SSL_free(ssl);
 		close(cfd);
 	}
